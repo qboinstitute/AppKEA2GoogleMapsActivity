@@ -1,5 +1,6 @@
 package qbo.com.appkea2googlemapsactivity
 
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 
@@ -7,12 +8,13 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
+GoogleMap.OnMapClickListener, GoogleMap.OnMarkerDragListener {
 
     private lateinit var mMap: GoogleMap
+    var lstLatLong = ArrayList<LatLng>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,10 +36,50 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        //Agregar el evento para hacer clic en el mapa.
+        mMap.setOnMapClickListener(this)
+        //Agregar el evento para arrastrar el marcador del mapa.
+        mMap.setOnMarkerDragListener(this)
 
         // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        val ubicacion = LatLng(-12.089150, -77.036641)
+        mMap.addMarker(MarkerOptions()
+                .position(ubicacion)
+                .title("Ubicación")
+                .draggable(true)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_location))
+                .snippet("Lima-Perú"))
+        mMap.isTrafficEnabled = true
+        //mMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion, 16.0F))
+    }
+
+    override fun onMapClick(p0: LatLng?) {
+        mMap.addMarker(
+                MarkerOptions().position(p0!!)
+                        .title("Nuevo Marcador")
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_location))
+        )
+        lstLatLong.add(p0!!)
+        val nuevaLinea = PolylineOptions()
+        nuevaLinea.color(Color.RED)
+        nuevaLinea.width(6F)
+        nuevaLinea.addAll(lstLatLong)
+        mMap.addPolyline(nuevaLinea)
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(p0!!, 36.0F))
+    }
+
+    override fun onMarkerDragStart(p0: Marker?) {
+        p0!!.hideInfoWindow()
+    }
+
+    override fun onMarkerDrag(p0: Marker?) {
+
+    }
+
+    override fun onMarkerDragEnd(p0: Marker?) {
+        var posicion = p0!!.position
+        p0!!.snippet = "${posicion.latitude} : ${posicion.longitude}"
+        p0!!.showInfoWindow()
     }
 }
